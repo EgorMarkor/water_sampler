@@ -125,10 +125,29 @@ class WaterSamplerNode(LifecycleNode):
         self.get_logger().info('Water Sampler shutdown')
         return TransitionCallbackReturn.SUCCESS
 
+    @staticmethod
+    def _convert_to_decimal(value: float, direction: str) -> float:
+        if not value:
+            return 0.0
+
+        decimal = abs(value)
+        if abs(value) >= 100:
+            degrees = int(decimal // 100)
+            minutes = decimal - degrees * 100
+            decimal = degrees + minutes / 60.0
+
+        if direction in ("S", "W"):
+            decimal = -decimal
+        return decimal
+
     def gps_listener(self, msg: tp.Union[NavSatFix, NMEAGPGGA]) -> None:
         if msg is not None:
-            self._gps_location["latitude"] = msg.latitude
-            self._gps_location["longitude"] = msg.longitude
+            if isinstance(msg, NMEAGPGGA):
+                self._gps_location["latitude"] = self._convert_to_decimal(msg.latitude, msg.latitude_dir)
+                self._gps_location["longitude"] = self._convert_to_decimal(msg.longitude, msg.longitude_dir)
+            else:
+                self._gps_location["latitude"] = msg.latitude
+                self._gps_location["longitude"] = msg.longitude
             self._gps_location["altitude"] = msg.altitude
 
     def timer_callback(self) -> None:

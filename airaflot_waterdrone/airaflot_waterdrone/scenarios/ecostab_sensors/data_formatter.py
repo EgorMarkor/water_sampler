@@ -178,6 +178,21 @@ class SensorsDataFormatter(LifecycleNode):
     def sensors_listener(self, msg: EcostabSensors) -> None:
         self.last_sensors_data = self._format_sensors_data(msg)
 
+    @staticmethod
+    def _convert_to_decimal(value: float, direction: str) -> float:
+        if not value:
+            return 0.0
+
+        decimal = abs(value)
+        if abs(value) >= 100:
+            degrees = int(decimal // 100)
+            minutes = decimal - degrees * 100
+            decimal = degrees + minutes / 60.0
+
+        if direction in ("S", "W"):
+            decimal = -decimal
+        return decimal
+
     def gps_listener(self, msg: tp.Union[NavSatFix, NMEAGPGGA]) -> None:
         self.last_gps_data = self._format_gps_data(msg)
 
@@ -226,8 +241,12 @@ class SensorsDataFormatter(LifecycleNode):
     ) -> tp.Dict:
         data = {"latitude": 0.0, "longitude": 0.0, "altitude": 0.0}
         if gps_msg is not None:
-            data["latitude"] = gps_msg.latitude
-            data["longitude"] = gps_msg.longitude
+            if isinstance(gps_msg, NMEAGPGGA):
+                data["latitude"] = self._convert_to_decimal(gps_msg.latitude, gps_msg.latitude_dir)
+                data["longitude"] = self._convert_to_decimal(gps_msg.longitude, gps_msg.longitude_dir)
+            else:
+                data["latitude"] = gps_msg.latitude
+                data["longitude"] = gps_msg.longitude
             data["altitude"] = gps_msg.altitude
         return data
 
