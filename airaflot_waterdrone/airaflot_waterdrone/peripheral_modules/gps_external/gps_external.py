@@ -76,9 +76,9 @@ class GPSExternalNode(LifecycleNode):
         nmea_string = nmea_string.split(",")
         nmea_message = NMEAGPGGA()
         nmea_message.timestamp = self._get_timestamp(nmea_string[1])
-        nmea_message.latitude = (float(nmea_string[2]) / 100) if nmea_string[2] else 0.0
+        nmea_message.latitude = float(nmea_string[2]) if nmea_string[2] else 0.0
         nmea_message.latitude_dir = nmea_string[3]
-        nmea_message.longitude = (float(nmea_string[4]) / 100) if nmea_string[4] else 0.0
+        nmea_message.longitude = float(nmea_string[4]) if nmea_string[4] else 0.0
         nmea_message.longitude_dir = nmea_string[5]
         nmea_message.altitude = float(nmea_string[9]) if len(nmea_string) > 9 and nmea_string[9] else 0.0
         nmea_message.fix_quality = int(nmea_string[6]) if len(nmea_string) > 6 and nmea_string[6] else 0
