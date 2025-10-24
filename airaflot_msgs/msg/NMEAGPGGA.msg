@@ -4,3 +4,5 @@ string latitude_dir
 float64 longitude
 string longitude_dir
 float64 altitude
+int32 fix_quality
+int32 satellites_in_view

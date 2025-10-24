@@ -141,6 +141,30 @@ function loadStatusAndNodes() {
             scenarioSelect.disabled = !allUnconfigured;
             warningElem.style.display = allUnconfigured ? 'none' : 'block';
 
+            const rtkStatusElem = document.getElementById('gps-rtk-status');
+            const satellitesElem = document.getElementById('gps-satellites');
+            if (rtkStatusElem && satellitesElem) {
+                const gpsStatus = data.gps_external_status;
+                rtkStatusElem.classList.remove('rtk-active', 'rtk-inactive');
+
+                if (gpsStatus) {
+                    rtkStatusElem.textContent = gpsStatus.status || 'Нет данных';
+                    if (gpsStatus.is_rtk) {
+                        rtkStatusElem.classList.add('rtk-active');
+                    } else {
+                        rtkStatusElem.classList.add('rtk-inactive');
+                    }
+
+                    const satellitesValue = gpsStatus.satellites_in_view;
+                    satellitesElem.textContent = (typeof satellitesValue === 'number' && !Number.isNaN(satellitesValue))
+                        ? satellitesValue
+                        : '—';
+                } else {
+                    rtkStatusElem.textContent = 'Нет данных';
+                    satellitesElem.textContent = '—';
+                }
+            }
+
             let list = '<ul>';
             data.nodes.forEach(n => {
                 let action = n.state === "active" ? "Деактивировать" : "Активировать";

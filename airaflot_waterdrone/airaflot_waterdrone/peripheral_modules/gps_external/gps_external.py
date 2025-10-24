@@ -80,7 +80,9 @@ class GPSExternalNode(LifecycleNode):
         nmea_message.latitude_dir = nmea_string[3]
         nmea_message.longitude = (float(nmea_string[4]) / 100) if nmea_string[4] else 0.0
         nmea_message.longitude_dir = nmea_string[5]
-        nmea_message.altitude = float(nmea_string[9]) if nmea_string[9] else 0.0
+        nmea_message.altitude = float(nmea_string[9]) if len(nmea_string) > 9 and nmea_string[9] else 0.0
+        nmea_message.fix_quality = int(nmea_string[6]) if len(nmea_string) > 6 and nmea_string[6] else 0
+        nmea_message.satellites_in_view = int(nmea_string[7]) if len(nmea_string) > 7 and nmea_string[7] else 0
         return nmea_message
 
     def _get_timestamp(self, utc_time_string: str) -> float:
