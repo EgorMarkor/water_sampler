@@ -72,42 +72,18 @@ class GPSExternalNode(LifecycleNode):
                 nmea_message = self._parse_nmea_string(nmea_string)
                 self.publisher.publish(nmea_message)
 
-def _parse_nmea_string(self, nmea_string: str) -> NMEAGPGGA:
-    nmea_string = nmea_string.split(",")
-    nmea_message = NMEAGPGGA()
-    nmea_message.timestamp = self._get_timestamp(nmea_string[1])
-
-    # --- Latitude ---
-    if len(nmea_string) > 2 and nmea_string[2]:
-        lat = float(nmea_string[2])
-        lat_deg = int(lat / 100)
-        lat_min = lat - lat_deg * 100
-        nmea_message.latitude = lat_deg + lat_min / 60.0
-        if len(nmea_string) > 3 and nmea_string[3] == "S":
-            nmea_message.latitude *= -1
-    else:
-        nmea_message.latitude = 0.0
-
-    # --- Longitude ---
-    if len(nmea_string) > 4 and nmea_string[4]:
-        lon = float(nmea_string[4])
-        lon_deg = int(lon / 100)
-        lon_min = lon - lon_deg * 100
-        nmea_message.longitude = lon_deg + lon_min / 60.0
-        if len(nmea_string) > 5 and nmea_string[5] == "W":
-            nmea_message.longitude *= -1
-    else:
-        nmea_message.longitude = 0.0
-
-    # --- Directions, altitude, fix info ---
-    nmea_message.latitude_dir = nmea_string[3] if len(nmea_string) > 3 else ""
-    nmea_message.longitude_dir = nmea_string[5] if len(nmea_string) > 5 else ""
-    nmea_message.altitude = float(nmea_string[9]) if len(nmea_string) > 9 and nmea_string[9] else 0.0
-    nmea_message.fix_quality = int(nmea_string[6]) if len(nmea_string) > 6 and nmea_string[6] else 0
-    nmea_message.satellites_in_view = int(nmea_string[7]) if len(nmea_string) > 7 and nmea_string[7] else 0
-
-    return nmea_message
-
+    def _parse_nmea_string(self, nmea_string: str) -> NMEAGPGGA:
+        nmea_string = nmea_string.split(",")
+        nmea_message = NMEAGPGGA()
+        nmea_message.timestamp = self._get_timestamp(nmea_string[1])
+        nmea_message.latitude = (float(nmea_string[2]) / 100) if nmea_string[2] else 0.0
+        nmea_message.latitude_dir = nmea_string[3]
+        nmea_message.longitude = (float(nmea_string[4]) / 100) if nmea_string[4] else 0.0
+        nmea_message.longitude_dir = nmea_string[5]
+        nmea_message.altitude = float(nmea_string[9]) if len(nmea_string) > 9 and nmea_string[9] else 0.0
+        nmea_message.fix_quality = int(nmea_string[6]) if len(nmea_string) > 6 and nmea_string[6] else 0
+        nmea_message.satellites_in_view = int(nmea_string[7]) if len(nmea_string) > 7 and nmea_string[7] else 0
+        return nmea_message
 
     def _get_timestamp(self, utc_time_string: str) -> float:
         today = date.today()
