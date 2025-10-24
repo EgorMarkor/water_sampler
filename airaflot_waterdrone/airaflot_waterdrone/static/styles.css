@@ -62,6 +62,27 @@ input[type="checkbox"] {
 .state-dead     { color: red; font-weight: bold; }
 .state-unconfigured { color: orange; font-weight: bold; }
 
+.gps-status {
+    margin-top: 10px;
+}
+
+.rtk-status {
+    font-weight: bold;
+}
+
+.rtk-active {
+    color: #28a745;
+}
+
+.rtk-inactive {
+    color: #6c757d;
+}
+
+.gps-satellites {
+    margin: 0;
+    color: #555;
+}
+
 .button-group { margin-top: 10px; }
 
 .file-tree ul { list-style-type: none; padding-left: 18px; margin: 0; }

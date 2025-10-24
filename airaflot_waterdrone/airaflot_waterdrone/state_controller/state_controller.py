@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
-from airaflot_msgs.msg import ScenarioStateMsg
+from airaflot_msgs.msg import ScenarioStateMsg, NMEAGPGGA
 from airaflot_msgs.srv import LedStripMode
 
 from airaflot_waterdrone.mavros_helpers.service_client import ServiceClientHelper
@@ -19,10 +19,22 @@ from .node_info import NodeInfo
 from .webserver import WebServer
 from .scenario_info import ScenarioInfo, WaterSamplerScenario, EcostabSensorsScenario, EchoSounderScenario, get_supported_scenarios
 from .log_saver import LogSaver
-from ..const_names import SCENARIO_STATE_TOPIC_NAME, LED_STRIP_SET_MODE_SERVICE
+from ..const_names import (
+    SCENARIO_STATE_TOPIC_NAME,
+    LED_STRIP_SET_MODE_SERVICE,
+    GPS_EXTERNAL_DATA_TOPIC_NAME,
+)
 
 NODE_NAME = "state_controller"
 LOG_DIR = "/home/airaflot/ros_logs"
+
+FIX_QUALITY_MAP = {
+    0: "Нет фикса",
+    1: "GPS",
+    2: "DGPS",
+    4: "RTK Fixed",
+    5: "RTK Float",
+}
 
 
 class StateControllerNode(Node):
@@ -39,6 +51,7 @@ class StateControllerNode(Node):
         self.prev_scenario_state = -1
         self.scenario_node_states: dict = {}
         self.nodes: dict[str, NodeInfo] = {}
+        self.gps_status: dict[str, object] | None = None
         
         # Create helper nodes with error handling
         self.helper_node_fetch = None
@@ -54,7 +67,7 @@ class StateControllerNode(Node):
         self.timer_check_callback_group = ReentrantCallbackGroup()
         self.subscriber_callback_group = ReentrantCallbackGroup()
         self.led_strip_callback_group = ReentrantCallbackGroup()
-        
+
         # Timing control
         self.last_node_fetch_time = datetime.now()
         self._fetch_in_progress = threading.Lock()  # Prevent overlapping fetch operations
@@ -69,8 +82,15 @@ class StateControllerNode(Node):
         
         # Subscriber and service client
         self.state_subscriber = self.create_subscription(
-            ScenarioStateMsg, SCENARIO_STATE_TOPIC_NAME, self.state_callback, 10, 
+            ScenarioStateMsg, SCENARIO_STATE_TOPIC_NAME, self.state_callback, 10,
             callback_group=self.subscriber_callback_group)
+        self.gps_subscription = self.create_subscription(
+            NMEAGPGGA,
+            GPS_EXTERNAL_DATA_TOPIC_NAME,
+            self.gps_status_callback,
+            10,
+            callback_group=self.subscriber_callback_group,
+        )
         self.led_strip_mode_client = None
         
         # Web server initialization
@@ -134,11 +154,24 @@ class StateControllerNode(Node):
             
         # Log outside of lock to prevent potential deadlock
         self.get_logger().info(f"Scenario states: {self.scenario_node_states}")
-        
+
         if state_changed:
             self._set_led_mode_from_scenario_state()
-            
+
         self.webserver.set_scenario_state(self.scenario_state)
+
+    def gps_status_callback(self, data: NMEAGPGGA) -> None:
+        quality = int(data.fix_quality)
+        satellites = int(data.satellites_in_view)
+        status_text = FIX_QUALITY_MAP.get(quality, f"Неизвестно ({quality})")
+        status_payload = {
+            "fix_quality": quality,
+            "status": status_text,
+            "is_rtk": quality in (4, 5),
+            "satellites_in_view": satellites,
+        }
+        self.gps_status = status_payload
+        self.webserver.set_gps_status(status_payload)
 
     def wait_for_nodes(self, nodes_list: list[str]) -> None:
         """Initialize nodes list with thread safety"""

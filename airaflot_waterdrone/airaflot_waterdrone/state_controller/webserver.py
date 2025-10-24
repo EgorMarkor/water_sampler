@@ -47,6 +47,7 @@ class WebServer:
         self.scenario_names = [scenario.name for scenario in get_supported_scenarios()]
         self.current_scenario_name = None
         self.current_scenario = None
+        self.gps_status: dict[str, object] | None = None
         
         # Flask app setup
         self.app = Flask(__name__, template_folder=self._get_templates_path(), static_folder=self._get_static_path())
@@ -211,7 +212,10 @@ class WebServer:
                             } for param in params
                         ]
                     project_state["parameters"] = data
-                    
+                    project_state["gps_external_status"] = (
+                        self.gps_status.copy() if isinstance(self.gps_status, dict) else self.gps_status
+                    )
+
                 return jsonify(project_state)
                 
             except Exception as e:
@@ -462,6 +466,14 @@ class WebServer:
         """Set scenario state with thread safety"""
         with self._state_context():
             self.scenario_state = state_mapping.get(scenario_state, "UNKNOWN")
+
+    def set_gps_status(self, gps_status: dict[str, object] | None) -> None:
+        """Update GPS status information exposed via the API"""
+        with self._state_context():
+            if isinstance(gps_status, dict):
+                self.gps_status = gps_status.copy()
+            else:
+                self.gps_status = gps_status
 
     def start(self):
         """Start the web server with improved error handling"""
