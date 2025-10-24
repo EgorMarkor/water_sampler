@@ -1,0 +1,21 @@
+<launch>
+    <include file="$(find-pkg-share mavros)/launch/apm.launch">
+        <arg name="fcu_url" value="/dev/ttyACM0:57600" />
+    </include>
+    <!-- <include file="$(find-pkg-share airaflot_waterdrone)/launch/webserver_launch.xml"/> -->
+    <node pkg="airaflot_waterdrone" exec="state_controller" name="state_controller" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="water_sampler_scenario" name="water_sampler_scenario" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="water_sampler_rele" name="water_sampler_rele" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="water_sampler_motor" name="water_sampler_motor" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="water_sampler" name="water_sampler" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="mode_controller_helper" name="mode_controller_helper" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="led_strip" name="led_strip" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="file_saver" name="file_saver" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="ecostab_sensors_publisher" name="ecostab_sensors_publisher" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="ecostab_sensors_scenario" name="ecostab_sensors_scenario" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="gps_external" name="gps_external" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="echo_sounder_scenario" name="echo_sounder_scenario" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="echo_sounder_publisher" name="echo_sounder" respawn="true"/>
+    <node pkg="airaflot_waterdrone" exec="common_sender" name="common_sender" respawn="true"/>
+
+</launch>

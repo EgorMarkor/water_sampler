@@ -1,0 +1,6 @@
+float64 timestamp
+float64 latitude
+string latitude_dir
+float64 longitude
+string longitude_dir
+float64 altitude
